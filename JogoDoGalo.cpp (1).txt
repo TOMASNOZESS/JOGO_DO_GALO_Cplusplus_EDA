@@ -1,0 +1,1034 @@
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+#include <fstream>
+#include <string>
+#include <windows.h>
+#include <cctype>
+#include <sstream>
+#include <thread>
+#include <chrono>
+
+using namespace std;
+
+class ttt{
+private:
+    char tab[3][3];
+    char marcaJ = 'N';
+    char marcaC = 'N';
+    char marcaJ1 = 'N';
+    char marcaJ2 = 'N';
+    int op1 = 9;
+    int op2 = 9;
+    int op3 = 9;
+    int op4 = 9;
+    char inicia;
+    int linha;
+    int coluna;
+    char aJogar;
+    int maxJogadas;
+    char marca;
+    bool num1 = true;
+    bool num2 = true;
+    //bool jogoTaOn = false;
+
+    //inútil, mas não se pode eliminar
+    int k = 0;
+    string player;
+    string nome1;
+    int score1;
+    string todo;
+    ///////////////////////////////
+
+    //variáveis necessárias para guardar dados no ficheiro
+    const string file = "filejogodogalo.txt";
+
+    struct Jogador {
+        string nome;
+        int score;
+        int j;
+    };
+
+    Jogador jogadores[10];
+    int indiceJogador = 0;
+    int numJogadores = 0;
+    string nomeJogador;
+
+public:
+    void iniciarJogo1(Jogador jogadores[], int numJogadores);
+    void iniciarJogo2(Jogador jogadores[], int numJogadores);
+    void iniciarJogo3(Jogador jogadores[], int numJogadores);
+
+    void mode();
+
+    void inicio();
+
+    //menus
+    void menuIn();
+    void menu(Jogador jogadores[], int numJogadores);
+
+    void tabuleiro();
+    void elementar();
+    void escolherMarca1();
+    void escolherMarca2();
+    void dificuldade();
+    void jogada();
+    void inTabuleiro();
+    void basico(char marca);
+    bool verificarVencedor(char);
+    bool verificarEmpate();
+    bool verificarJogadaGanhar(char marca);
+    void medio(char marca);
+    void avancado(char marca);
+    void limpa();
+
+    //funções necessárias para guardar dados no ficheiro
+    void adicionarJogador(Jogador jogadores[], int& numJogadores);
+    void mostrarNomes(const Jogador jogadores[], int numJogadores);
+    void removerJogador(Jogador jogadores[], int& numJogadores);
+    void estatisticas(const Jogador jogadores[], int numJogadores);
+    void salvarDados(const Jogador jogadores[], int numJogadores);
+    void carregarDados(Jogador jogadores[], int numJogadores);
+    void escolherJogador(Jogador jogadores[], int numJogadores);
+    void limparConsole();
+};
+
+////////////////////////////////////////////////////
+
+//int main
+int main(){
+    srand(time(0)); //inicializar a semente para gerar números aleatórios
+    ttt jogo;
+
+    jogo.inicio();
+
+    return 0;
+}
+
+void ttt::inicio(){
+    ifstream arquivo(file);
+    if (arquivo.is_open()) {
+
+        arquivo >> numJogadores;
+
+
+        for (int i = 0; i < numJogadores; ++i){
+            arquivo >> jogadores[i].nome >> jogadores[i].score;
+        }
+        arquivo.close();
+    } else {
+        cout << "Erro ao abrir o arquivo para carregar os dados." << endl;
+    }
+    menuIn();
+}
+//////////////////////////////////////////////////////
+//menus
+void ttt::menuIn(){
+    Beep(225,150);
+    do {
+        cout << "Menu inicial" << endl;
+        cout << " _____________________________" << endl;
+        cout << "|                             |" << endl;
+        cout << "| 1. Introduzir nome          |" << endl;
+        if (numJogadores > 0) {
+            cout << "| 2. Ver nomes                |" << endl;
+            cout << "| 3. Remover nome             |" << endl;
+            cout << "| 4. Avancar para o jogo      |" << endl;
+        }
+        cout << "| 0. Sair                     |" << endl;
+        cout << "|_____________________________|" << endl;
+        cout << "Opcao: ";
+        string entrada;
+        //cin >> entrada;
+        //cin >> op1;
+        //cout << "\n_________________________" << endl;
+
+        getline(cin, entrada);
+
+        if (entrada.empty()){
+            limparConsole();
+            continue;
+        }
+
+        for (char c : entrada) {
+            if (!isdigit(c)) {
+                num1 = false;
+                break;
+            }
+        }
+
+        if (!num1) {
+            Beep(225,150);
+            limparConsole();
+            cout << "Opcao invalida" << endl;
+            op1 = 5;
+            num1 = true;
+            continue;
+        }
+
+        op1 = stoi(entrada);
+
+        switch (op1) {
+        case 1:
+            limparConsole();
+            adicionarJogador(jogadores, numJogadores);
+            break;
+        case 2:
+            limparConsole();
+            mostrarNomes(jogadores, numJogadores);
+            break;
+        case 3:
+            limparConsole();
+            removerJogador(jogadores, numJogadores);
+            break;
+        case 4:
+            limparConsole();
+            escolherJogador(jogadores, numJogadores);
+            break;
+        case 0:
+            Beep(225,150);
+            limparConsole();
+            salvarDados(jogadores, numJogadores);
+            cout << "Ate uma proxima! :)" << endl;
+            break;
+        default:
+            Beep(225,150);
+            limparConsole();
+            cout << "Opcao invalida" << endl;
+        }
+    } while (op1 != 0);
+}
+
+void ttt::menu(Jogador jogadores[], int numJogadores){
+    Beep(225,150);
+    do {
+        cout << "Jogador: " << nomeJogador << endl;
+        cout << " _____________________________" << endl;
+        cout << "|                             |" << endl;
+        cout << "| 1. Iniciar Jogo             |" << endl;
+        cout << "| 2. Placar Top 10            |" << endl;
+        cout << "| 3. Voltar                   |" << endl;
+        cout << "| 0. Sair                     |" << endl;
+        cout << "|_____________________________|" << endl;
+        cout << "Opcao: ";
+        string entrada;
+
+        getline(cin, entrada);
+
+        if (entrada.empty()){
+            limparConsole();
+            continue;
+        } else if (entrada.empty()){
+            continue;
+        }
+
+
+
+        for (char c : entrada) {
+            if (!isdigit(c)) {
+                num2 = false;
+                break;
+            }
+        }
+
+        if (!num2) {
+            Beep(225,150);
+            limparConsole();
+            cout << "Opcao invalida" << endl;
+            op2 = 5;
+            num2 = true;
+            continue;
+        }
+
+        op2 = stoi(entrada);
+
+        switch(op2){
+        case 1: mode(); break;
+        case 2: limparConsole(); estatisticas(jogadores, numJogadores); break;
+        case 3: limpa(); limparConsole(); menuIn(); break;
+        case 0:
+            Beep(225,150);
+            limparConsole();
+            salvarDados(jogadores, numJogadores);
+            cout << "Ate uma proxima! :)" << endl;
+            op2 = 0;
+            op1 = 0;
+            break;
+        default:
+            Beep(225,150);
+            limparConsole();
+            cout << "Opcao invalida" << endl;
+        }
+    } while (op2 != 0);
+}//fim dos menus
+
+////////////////////////////////////////////////////////////
+
+//funções a ver com o tabuleiro
+
+//o programa tem que reconhecer que o espaço a mudar é onde consta o '-'
+void ttt::inTabuleiro(){
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            tab[i][j] = '-';
+        }
+    }
+}
+
+//design do tabuleiro
+void ttt::tabuleiro(){
+    cout << "     0       1       2" << endl;
+    for (int i = 0; i < 3; ++i) {
+        cout << "         |       |       " << endl;
+        cout << i << "    ";
+        for (int j = 0; j < 3; ++j) {
+            if (tab[i][j] == 'X') {
+                cout << "\033[38;5;208mX\033[0m";
+            } else if (tab[i][j] == 'O') {
+                cout << "\033[38;5;33mO\033[0m";
+            } else {
+                cout << " ";
+            }
+            if (j < 2) {
+                cout << "   |   ";
+            }
+        }
+        cout << endl;
+        if (i < 2) {
+            cout << "  _______|_______|_______" << endl;
+        }
+    }
+    cout << "         |       |       " << endl;
+    cout << "\n" << endl;
+}
+
+//////////////////////////////////////////////////////////
+
+//escolher com quem jogar
+void ttt::mode(){
+    limparConsole();
+    Beep(225,150);
+
+    do{
+        cout << "Modo de Jogo" << endl;
+        cout << " _____________________________" << endl;
+        cout << "|                             |" << endl;
+        cout << "| 1. Jogador vs Computador    |" << endl;
+        cout << "| 2. Jogador vs Jogador       |" << endl;
+        cout << "| 3. Computador vs Computador |" << endl;
+        cout << "| 4. Voltar                   |" << endl;
+        cout << "|_____________________________|" << endl;
+        cout << "Opcao: ";
+
+        string entrada;
+        cin >> entrada;
+
+        bool num = true;
+        for(char c : entrada){
+            if(!isdigit(c)){
+                num = false;
+                break;
+            }
+        }
+
+        if(!num){
+            Beep(225,150);
+            limparConsole();
+            cout << "Opcao invalida" << endl;
+            continue;
+        }
+
+        op4 = stoi(entrada);
+
+        if(op4 != 1 && op4 != 2 && op4 != 3 && op4 != 4){
+            Beep(225,150);
+            limparConsole();
+            cout << "Opcao invalida" << endl;
+            continue;
+        } else if(op4 == 4){
+            limparConsole();
+            menu(jogadores, numJogadores);
+        }
+
+        switch(op4){
+        case 1: iniciarJogo1(jogadores, numJogadores);
+        case 2: iniciarJogo2(jogadores, numJogadores);
+        case 3: iniciarJogo3(jogadores, numJogadores);
+        }
+
+    } while(op4 != 1 && op4 != 2 && op4 != 3 && op4 != 4);
+}
+
+//ao escolher iniciar o jogo
+void ttt::iniciarJogo1(Jogador jogadores[], int numJogadores){
+    limparConsole();
+
+    Beep(225,150);
+    do{
+        cout << "Dificuldade" << endl;
+        cout << " _____________________________" << endl;
+        cout << "|                             |" << endl;
+        cout << "| 1. Elementar                |" << endl;
+        cout << "| 2. Basico                   |" << endl;
+        cout << "| 3. Medio                    |" << endl;
+        cout << "| 4. Avancado                 |" << endl;
+        cout << "| 5. Voltar                   |" << endl;
+        cout << "|_____________________________|" << endl;
+        cout << "Opcao: ";
+        //cin >> op3;
+
+        string entrada;
+        cin >> entrada;
+
+        bool num = true;
+        for(char c : entrada){
+            if(!isdigit(c)){
+                num = false;
+                break;
+            }
+        }
+
+        if(!num){
+            Beep(225,150);
+            limparConsole();
+            cout << "Opcao invalida" << endl;
+            continue;
+        }
+
+        op3 = stoi(entrada);
+
+        if(op3 != 1 && op3 != 2 && op3 != 3 && op3 != 4 && op3 != 5){
+            Beep(225,150);
+            limparConsole();
+            cout << "Opcao invalida" << endl;
+            continue;
+        } else if(op3 == 5){
+            limparConsole();
+            mode();
+        }
+
+    } while(op3 != 1 && op3 != 2 && op3 != 3 && op3 != 4 && op3 != 5);
+
+    limparConsole();
+    escolherMarca1();
+
+    limparConsole();
+
+    bool jogoTaOn = false;
+    if(marcaJ == 'X' || marcaJ == 'O' || marcaJ == 'x' || marcaJ == 'o'){
+        jogoTaOn = true;
+    }
+
+    inTabuleiro();
+    tabuleiro();
+
+    if (inicia == marcaJ) {
+        aJogar = marcaJ;
+    } else {
+        aJogar = marcaC;
+    }
+
+    while(jogoTaOn){
+        if(aJogar == marcaJ){
+            jogada();
+        } else {
+            switch(op3){
+            case 1: elementar(); break;
+            case 2: basico(marcaC); break;
+            case 3: medio(marcaC); break;
+            case 4: avancado(marcaC); break;
+                //default: Beep(225,150); limparConsole(); cout << "Opcao invalida" << endl;
+            }
+        }
+
+        tabuleiro();
+
+        if (verificarVencedor(aJogar) == true && aJogar == marcaJ) {
+            limparConsole();
+            jogoTaOn = false;
+            jogadores[indiceJogador].score += 10;
+            limpa();
+            cout << "O jogador venceu!" << endl;
+            //this_thread::sleep_for(chrono::seconds(3));
+            menu(jogadores, numJogadores);
+        } else if (verificarVencedor(aJogar) == true && aJogar == marcaC){
+            limparConsole();
+            jogoTaOn = false;
+            jogadores[indiceJogador].score -= 10;
+            limpa();
+            cout << "O jogador perdeu!" << endl;
+            //this_thread::sleep_for(chrono::seconds(3));
+            menu(jogadores, numJogadores);
+        } else if (verificarEmpate()) {
+            limparConsole();
+            jogoTaOn = false;
+            limpa();
+            cout << "O jogador empatou!" << endl;
+            //this_thread::sleep_for(chrono::seconds(3));
+            menu(jogadores, numJogadores);
+        } /*else {
+            cout << "O computador venceu!" << endl;
+            jogoTaOn = false;
+        }*/
+
+        aJogar = (aJogar == marcaJ) ? marcaC : marcaJ;
+    }
+}
+
+void ttt::iniciarJogo2(Jogador jogadores[], int numJogadores){
+    limparConsole();
+
+    escolherMarca2();
+
+    limparConsole();
+
+    bool jogoTaOn = false;
+    if(marcaJ1 == 'X' || marcaJ1 == 'O' || marcaJ1 == 'x' || marcaJ1 == 'o'){
+        jogoTaOn = true;
+    }
+
+    inTabuleiro();
+    tabuleiro();
+
+    if (inicia == marcaJ1) {
+        aJogar = marcaJ1;
+    } else {
+        aJogar = marcaJ2;
+    }
+
+    while(jogoTaOn){
+        jogada();
+    }
+
+    tabuleiro();
+
+    if (verificarVencedor(aJogar) == true && aJogar == marcaJ1) {
+        limparConsole();
+        jogoTaOn = false;
+        jogadores[indiceJogador].score += 10;
+        limpa();
+        cout << "O jogador 1 venceu!" << endl;
+        //this_thread::sleep_for(chrono::seconds(3));
+        menu(jogadores, numJogadores);
+    } else if (verificarVencedor(aJogar) == true && aJogar == marcaJ2){
+        limparConsole();
+        jogoTaOn = false;
+        jogadores[indiceJogador].score -= 10;
+        limpa();
+        cout << "O jogador 2!" << endl;
+        //this_thread::sleep_for(chrono::seconds(3));
+        menu(jogadores, numJogadores);
+    } else if (verificarEmpate()) {
+        limparConsole();
+        jogoTaOn = false;
+        limpa();
+        cout << "Os jogadores empataram!" << endl;
+        //this_thread::sleep_for(chrono::seconds(3));
+        menu(jogadores, numJogadores);
+    }
+
+    aJogar = (aJogar == marcaJ1) ? marcaJ2 : marcaJ1;
+}
+
+void ttt::iniciarJogo3(Jogador jogadores[], int numJogadores){
+
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+void ttt::escolherMarca1(){
+    //escolher a marca do jogador
+    limparConsole();
+    Beep(225,150);
+    while(marcaJ != 'X' && marcaJ != 'O'){
+        cout << "Marca do jogador (X ou O): ";
+        string entrada;
+        cin >> entrada;
+
+        //converter a entrada para letra maiúscula
+        marcaJ = toupper(entrada[0]);
+
+        if(marcaJ != 'X' && marcaJ != 'O'){
+            limparConsole();
+            Beep(225,150);
+            cout << "Marca invalida" << endl;
+        } else {
+            //definir a marca do computador
+            marcaC = (marcaJ == 'X') ? 'O' : 'X';
+            //definir quem começa o jogo
+            inicia = (marcaJ == 'O') ? marcaJ : marcaC;
+        }
+    }
+}
+
+void ttt::escolherMarca2(){
+    //escolher a marca do jogador
+    limparConsole();
+    Beep(225,150);
+    while(marcaJ1 != 'X' && marcaJ1 != 'O'){
+        cout << "Marca do jogador (X ou O): ";
+        string entrada;
+        cin >> entrada;
+
+        //converter a entrada para letra maiúscula
+        marcaJ1 = toupper(entrada[0]);
+
+        if(marcaJ1 != 'X' && marcaJ1 != 'O'){
+            limparConsole();
+            Beep(225,150);
+            cout << "Marca invalida" << endl;
+        } else {
+            //definir a marca do computador
+            marcaJ2 = (marcaJ1 == 'X') ? 'O' : 'X';
+            //definir quem começa o jogo
+            inicia = (marcaJ1 == 'O') ? marcaJ1 : marcaJ2;
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////
+
+//dificuldades
+void ttt::elementar(){
+    while(tab[linha][coluna] != '-'){
+        linha = rand() % 3;
+        coluna = rand() % 3;
+    }
+
+    tab[linha][coluna] = marcaC;
+    limparConsole();
+}
+
+void ttt::basico(char marca){
+    //verificar se há uma jogada para ganhar
+    if (verificarJogadaGanhar(marca)) {
+        return;
+    }
+    limparConsole();
+
+    //caso contrário, fazer uma jogada aleatória
+    elementar();
+    limparConsole();
+}
+
+void ttt::medio(char marca){
+    //verificar jogada para ganhar
+    if (verificarJogadaGanhar(marca)) {
+        return;
+    }
+    limparConsole();
+
+    //verificar jogada para impedir jogador de ganhar
+    char adversario = (marca == 'X') ? 'O' : 'X';
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            if (tab[i][j] == '-') {
+                tab[i][j] = adversario;
+                if (verificarVencedor(adversario)) {
+                    tab[i][j] = marca;
+                    return;
+                }
+                tab[i][j] = '-';
+            }
+        }
+    }
+
+    //fazer jogada aleatória caso nada funcione
+    elementar();
+    limparConsole();
+}
+
+void ttt::avancado(char marca){
+
+    if (verificarJogadaGanhar(marca)) {
+        return;
+    }
+
+    //verificar jogada para impedir jogador de ganhar
+    char adversario = (marca == 'X') ? 'O' : 'X';
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            if (tab[i][j] == '-') {
+                tab[i][j] = adversario;
+                if (verificarVencedor(adversario)) {
+                    tab[i][j] = marca;
+                    return;
+                }
+                tab[i][j] = '-';
+            }
+        }
+    }
+
+    //fazer uma jogada para ganhar se possível
+    if (verificarJogadaGanhar(marca)) {
+        return;
+    }
+
+    //fazer uma jogada para evitar a derrota
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            if (tab[i][j] == '-') {
+                tab[i][j] = marca;
+                if (verificarVencedor(marca)) {
+                    return;
+                }
+                tab[i][j] = '-';
+            }
+        }
+    }
+
+    //se não for possível ganhar ou evitar a derrota, fazer qualquer jogada disponível
+    elementar();
+    limparConsole();
+}
+
+///////////////////////////////////////////////////////////////////////
+
+//verificas
+
+bool ttt::verificarVencedor(char jogador) {
+    //verificar linhas e colunas
+    for (int i = 0; i < 3; ++i) {
+        if (tab[i][0] == jogador && tab[i][1] == jogador && tab[i][2] == jogador) {
+            return true;
+        }
+        if (tab[0][i] == jogador && tab[1][i] == jogador && tab[2][i] == jogador) {
+            return true;
+        }
+    }
+    //verificar diagonais
+    if (tab[0][0] == jogador && tab[1][1] == jogador && tab[2][2] == jogador) {
+        return true;
+    }
+    if (tab[0][2] == jogador && tab[1][1] == jogador && tab[2][0] == jogador) {
+        return true;
+    }
+    return false;
+}
+
+bool ttt::verificarEmpate() {
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            if (tab[i][j] == '-') {
+                return false; //há um espaço vazio
+            }
+        }
+    }
+    return true; //todos os espaços estão preenchidos
+}
+
+//função para verificar se há alguma jogada para ganhar
+bool ttt::verificarJogadaGanhar(char marca) {
+    //verificar linhas e colunas
+    for (int i = 0; i < 3; ++i) {
+        // Verificar linhas
+        if (tab[i][0] == marca && tab[i][1] == marca && tab[i][2] == '-') {
+            tab[i][2] = marca;
+            return true;
+        }
+        if (tab[i][0] == marca && tab[i][2] == marca && tab[i][1] == '-') {
+            tab[i][1] = marca;
+            return true;
+        }
+        if (tab[i][1] == marca && tab[i][2] == marca && tab[i][0] == '-') {
+            tab[i][0] = marca;
+            return true;
+        }
+        // Verificar colunas
+        if (tab[0][i] == marca && tab[1][i] == marca && tab[2][i] == '-') {
+            tab[2][i] = marca;
+            return true;
+        }
+        if (tab[0][i] == marca && tab[2][i] == marca && tab[1][i] == '-') {
+            tab[1][i] = marca;
+            return true;
+        }
+        if (tab[1][i] == marca && tab[2][i] == marca && tab[0][i] == '-') {
+            tab[0][i] = marca;
+            return true;
+        }
+    }
+    //verificar diagonais
+    if (tab[0][0] == marca && tab[1][1] == marca && tab[2][2] == '-') {
+        tab[2][2] = marca;
+        return true;
+    }
+    if (tab[0][0] == marca && tab[2][2] == marca && tab[1][1] == '-') {
+        tab[1][1] = marca;
+        return true;
+    }
+    if (tab[1][1] == marca && tab[2][2] == marca && tab[0][0] == '-') {
+        tab[0][0] = marca;
+        return true;
+    }
+    if (tab[0][2] == marca && tab[1][1] == marca && tab[2][0] == '-') {
+        tab[2][0] = marca;
+        return true;
+    }
+    if (tab[0][2] == marca && tab[2][0] == marca && tab[1][1] == '-') {
+        tab[1][1] = marca;
+        return true;
+    }
+    if (tab[1][1] == marca && tab[2][0] == marca && tab[0][2] == '-') {
+        tab[0][2] = marca;
+        return true;
+    }
+    return false;
+}
+/////////////////////////////////////////////////////////////////
+
+//jogada do jogador
+void ttt::jogada(){
+    Beep(225,150);
+    while(linha < 0 || linha > 2 || coluna < 0 || coluna > 2 || tab[linha][coluna] != '-'){
+        cout << "Digite a linha e a coluna da sua jogada (de 0 a 2): ";
+        cin >> linha >> coluna;
+    }
+    limparConsole();
+
+    //o '-' é substituído pela marca
+    tab[linha][coluna] = aJogar;
+}
+
+//limpa o jogo todo, pronto para recomeçar um novo jogo
+void ttt::limpa(){
+    op2 = 9;
+    op3 = 9;
+    marcaJ = 'N';
+    marcaC = 'N';
+    num1 = true;
+    num2 = true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//fuções de ficheiros
+
+void ttt::adicionarJogador(Jogador jogadores[], int& numJogadores) {
+    Beep(225, 150);
+    if (numJogadores < 10){
+        cout << "Digite o nome do jogador (pressione Enter para voltar ao menu): ";
+
+        string nome;
+        //cin >> nome;
+
+        getline(cin, nome);
+
+        if (nome.empty()) {
+            limparConsole();
+            Beep(225, 150);
+            return;
+        } else if(!nome.empty()){
+            num1 = true;
+
+            jogadores[numJogadores].nome = nome;
+            jogadores[numJogadores].score = 0;
+            numJogadores++;
+            limparConsole();
+            Beep(225, 150);
+            cout << "Jogador adicionado com sucesso!" << endl;
+        } else {
+            limparConsole();
+            Beep(225, 150);
+            cout << "Limite de jogadores atingido." << endl;
+        }
+    }
+}
+
+void ttt::mostrarNomes(const Jogador jogadores[], int numJogadores){
+    Beep(225,150);
+    if (numJogadores == 0) {
+        limparConsole();
+        cout << "Opcao invalida" << endl;
+        return;
+    }
+
+    cout << "Nomes dos jogadores:" << endl;
+    for (int i = 0; i < numJogadores; ++i) {
+        cout << i + 1 << ". " << jogadores[i].nome << " - Score: " << jogadores[i].score << endl;
+    }
+    cout << "Pressione Enter para voltar ao menu." << endl;
+    //cin.ignore();
+    cin.get();
+    op1 = 5;
+    limparConsole();
+    menuIn();
+}
+
+void ttt::removerJogador(Jogador jogadores[], int& numJogadores){
+    Beep(225,150);
+    if (numJogadores == 0) {
+        limparConsole();
+        cout << "Opcao invalida" << endl;
+        return;
+    }
+
+    for (int i = 0; i < numJogadores; ++i) {
+        cout << i + 1 << ". " << jogadores[i].nome << " - Score: " << jogadores[i].score << endl;
+    }
+    cout << "\n\n";
+
+    string entrada;
+    cout << "Digite o numero ou nome do jogador a ser removido: ";
+    //cin >> entrada;
+    //cin >> nome;
+
+    getline(cin, entrada);
+
+    if (entrada.empty()) {
+        limparConsole();
+        Beep(225, 150);
+        return;
+    }
+
+    int numRemover;
+    stringstream ss(entrada);
+    if (ss >> numRemover) {
+        //verificar se o número do jogador é válido
+        if (numRemover < 1 || numRemover > numJogadores) {
+            limparConsole();
+            Beep(225,150);
+            cout << "Jogador invalido" << endl;
+            return;
+        }
+        //remover jogador pelo número
+        for (int i = numRemover - 1; i < numJogadores - 1; ++i) {
+            jogadores[i] = jogadores[i + 1];
+        }
+        numJogadores--;
+        limparConsole();
+        Beep(225,150);
+        cout << "Jogador removido com sucesso!" << endl;
+    } else {
+        //remover jogador pelo nome
+        bool encontrado = false;
+        for (int i = 0; i < numJogadores; ++i) {
+            if (jogadores[i].nome == entrada) {
+                encontrado = true;
+                for (int j = i; j < numJogadores - 1; ++j) {
+                    jogadores[j] = jogadores[j + 1];
+                }
+                numJogadores--;
+                limparConsole();
+                Beep(225,150);
+                cout << "Jogador removido com sucesso!" << endl;
+                break;
+            }
+        }
+
+        if (!encontrado) {
+            limparConsole();
+            Beep(225,150);
+            cout << "Jogador nao encontrado." << endl;
+        }
+    }
+}
+
+void ttt::estatisticas(const Jogador jogadores1[], int numJogadores){
+    Beep(225,150);
+    limparConsole();
+    cout << "Nomes dos jogadores:" << endl;
+    for (int i = 0; i < numJogadores; ++i) {
+        cout << i + 1 << ". " << jogadores[i].nome << " - Score: " << jogadores[i].score << endl;
+    }
+    cout << "Pressione Enter para voltar ao menu." << endl;
+    //cin.ignore();
+    cin.get();
+    op2 = 5;
+    limparConsole();
+    menu(jogadores, numJogadores);
+}
+
+void ttt::salvarDados(const Jogador jogadores[], int numJogadores){
+    ofstream arquivo(file);
+    if (arquivo.is_open()) {
+
+        arquivo << numJogadores << endl;
+
+        for (int i = 0; i < numJogadores; ++i) {
+            arquivo << jogadores[i].nome << " " << jogadores[i].score << endl;
+        }
+        arquivo.close();
+        cout << "Dados salvos com sucesso!" << endl;
+    } else {
+        cout << "Erro ao abrir o arquivo para salvar os dados." << endl;
+    }
+}
+
+void ttt::carregarDados(Jogador jogadores[], int numJogadores){
+    ifstream arquivo(file);
+    if (arquivo.is_open()) {
+
+        arquivo >> numJogadores;
+
+        for (int i = 0; i < numJogadores; ++i) {
+            arquivo >> jogadores[i].nome >> jogadores[i].score;
+        }
+        arquivo.close();
+    } else {
+        cout << "Erro ao abrir o arquivo para carregar os dados." << endl;
+    }
+}
+
+void ttt::escolherJogador(Jogador jogadores[], int numJogadores){
+    Beep(225,150);
+    //adaptação dos jogador a jogar ao jogo em si
+    if (numJogadores == 0) {
+        limparConsole();
+        cout << "Opcao invalida" << endl;
+        return;
+    }
+
+    //cout << "Nomes dos jogadores:" << endl;
+    for (int i = 0; i < numJogadores; ++i) {
+        cout << i + 1 << ". " << jogadores[i].nome << " - Score: " << jogadores[i].score << endl;
+    }
+    cout << "\n\n";
+
+    string entrada;
+    cout << "Escolha o numero ou nome do jogador para jogar: ";
+    cin >> entrada;
+
+    int numJogador;
+    stringstream ss(entrada);
+    if (ss >> numJogador) {
+        //verificar se o número do jogador é válido
+        if (numJogador < 1 || numJogador > numJogadores) {
+            Beep(225,150);
+            limparConsole();
+            cout << "Jogador invalido" << endl;
+            return;
+        }
+        //selecionar o jogador correspondente ao número inserido
+        indiceJogador = numJogador - 1; //ajustar o índice baseado no número
+        nomeJogador = jogadores[indiceJogador].nome;
+    } else {
+        //procurar o jogador pelo nome
+        bool encontrado = false;
+        for (int i = 0; i < numJogadores; ++i) {
+            if (jogadores[i].nome == entrada) {
+                encontrado = true;
+                indiceJogador = i;
+                nomeJogador = jogadores[indiceJogador].nome;
+                break;
+            }
+        }
+
+        if (!encontrado) {
+            Beep(225,150);
+            limparConsole();
+            cout << "Jogador nao encontrado." << endl;
+            return;
+        }
+    }
+
+    limparConsole();
+    menu(jogadores, numJogadores);
+}
+
+void ttt::limparConsole(){
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
+}
